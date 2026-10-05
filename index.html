@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeafWork</title>
+</head>
+
+<body>
+  <h1>DeafWork</h1>
+  <p>Deaf-friendly jobs</p>
+
+  <input id="search" type="text" placeholder="Search jobs, companies, or locations">
+  <button onclick="searchJobs()">Search</button>
+
+  <div id="results"></div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabaseUrl = "https://ktxgcdmueqqnzjpchsql.supabase.co";
+    const supabaseKey = "sb_publishable_qViIYsXWSWg8m3QpNlZZWA_ztLT82SV";
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function searchJobs() {
+      const search = document.getElementById("search").value.trim();
+      const results = document.getElementById("results");
+
+      results.innerHTML = "Loading jobs...";
+
+      let query = supabase
+        .from("jobs")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (search) {
+        query = query.or(
+          `title.ilike.%${search}%,company_name.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`
+        );
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        results.innerHTML = "<p>Error loading jobs.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        results.innerHTML = "<p>No jobs found.</p>";
+        return;
+      }
+
+      results.innerHTML = data.map(job => `
+        <div>
+          <h2>${job.title}</h2>
+          <strong>${job.company_name || ""}</strong>
+          <p>${job.location || ""}</p>
+          <p>${job.description || ""}</p>
+          <hr>
+        </div>
+      `).join("");
+    }
+
+    window.searchJobs = searchJobs;
+
+    searchJobs();
+  </script>
+</body>
+</html>
