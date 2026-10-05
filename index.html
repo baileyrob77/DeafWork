@@ -3,71 +3,338 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeafWork</title>
+  <title>DeafWork — Deaf-Friendly Jobs</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f7fa;
+    }
+
+    header {
+      background: #17324d;
+      color: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+    }
+
+    .search-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      padding: 12px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input {
+      width: calc(100% - 30px);
+    }
+
+    button {
+      background: #17324d;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .job {
+      background: white;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .job h2 {
+      margin-top: 0;
+      color: #17324d;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #e8f1f8;
+      padding: 6px 10px;
+      margin: 4px 4px 4px 0;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .asl {
+      background: #e5f6e9;
+    }
+
+    .remote {
+      background: #fff3cd;
+    }
+
+    .apply {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #17324d;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+
+    #status {
+      margin: 15px 0;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
+
+<header>
   <h1>DeafWork</h1>
-  <p>Deaf-friendly jobs</p>
+  <p>Deaf-friendly jobs and employment opportunities</p>
+</header>
 
-  <input id="search" type="text" placeholder="Search jobs, companies, or locations">
-  <button onclick="searchJobs()">Search</button>
+<section class="search-box">
 
-  <div id="results"></div>
+  <input
+    id="search"
+    type="text"
+    placeholder="Search jobs, companies, or locations"
+  >
 
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  <div class="filters">
 
-    const supabaseUrl = "https://ktxgcdmueqqnzjpchsql.supabase.co";
-    const supabaseKey = "sb_publishable_qViIYsXWSWg8m3QpNlZZWA_ztLT82SV";
+    <label>
+      <input type="checkbox" id="remote">
+      Remote only
+    </label>
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    <label>
+      <input type="checkbox" id="asl">
+      ASL-friendly
+    </label>
 
-    async function searchJobs() {
-      const search = document.getElementById("search").value.trim();
-      const results = document.getElementById("results");
+    <select id="category">
+      <option value="">All categories</option>
+      <option value="Customer Service">Customer Service</option>
+      <option value="Healthcare">Healthcare</option>
+      <option value="Technology">Technology</option>
+      <option value="Education">Education</option>
+      <option value="Administration">Administration</option>
+      <option value="Retail">Retail</option>
+      <option value="Other">Other</option>
+    </select>
 
-      results.innerHTML = "Loading jobs...";
+    <button onclick="searchJobs()">Search Jobs</button>
 
-      let query = supabase
-        .from("jobs")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+  </div>
 
-      if (search) {
-        query = query.or(
-          `title.ilike.%${search}%,company_name.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`
-        );
-      }
+</section>
 
-      const { data, error } = await query;
+<div id="status">Loading jobs...</div>
 
-      if (error) {
-        results.innerHTML = "<p>Error loading jobs.</p>";
-        console.error(error);
-        return;
-      }
+<div id="results"></div>
 
-      if (!data || data.length === 0) {
-        results.innerHTML = "<p>No jobs found.</p>";
-        return;
-      }
+<script type="module">
 
-      results.innerHTML = data.map(job => `
-        <div>
-          <h2>${job.title}</h2>
-          <strong>${job.company_name || ""}</strong>
-          <p>${job.location || ""}</p>
-          <p>${job.description || ""}</p>
-          <hr>
-        </div>
-      `).join("");
+  import { createClient }
+    from "https://esm.sh/@supabase/supabase-js@2";
+
+  const supabaseUrl =
+    "https://ktxgcdmueqqnzjpchsql.supabase.co";
+
+  const supabaseKey =
+    "sb_publishable_qViIYsXWSWg8m3QpNlZZWA_ztLT82SV";
+
+  const supabase =
+    createClient(supabaseUrl, supabaseKey);
+
+
+  async function searchJobs() {
+
+    const search =
+      document.getElementById("search").value.trim();
+
+    const remote =
+      document.getElementById("remote").checked;
+
+    const asl =
+      document.getElementById("asl").checked;
+
+    const category =
+      document.getElementById("category").value;
+
+    const results =
+      document.getElementById("results");
+
+    const status =
+      document.getElementById("status");
+
+    status.textContent = "Searching jobs...";
+
+    let query = supabase
+      .from("jobs")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+
+    if (remote) {
+      query = query.eq("is_remote", true);
     }
 
-    window.searchJobs = searchJobs;
+    if (asl) {
+      query = query.eq("requires_asl", true);
+    }
 
-    searchJobs();
-  </script>
+    if (category) {
+      query = query.eq("category", category);
+    }
+
+
+    if (search) {
+
+      const safeSearch =
+        search.replace(/[%_]/g, "");
+
+      query = query.or(
+        `title.ilike.%${safeSearch}%,company_name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,location.ilike.%${safeSearch}%`
+      );
+
+    }
+
+
+    const { data, error } =
+      await query;
+
+
+    if (error) {
+
+      console.error(error);
+
+      status.textContent =
+        "There was a problem loading jobs.";
+
+      results.innerHTML = "";
+
+      return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+      status.textContent =
+        "No jobs found.";
+
+      results.innerHTML =
+        "<p>Try another search or remove a filter.</p>";
+
+      return;
+    }
+
+
+    status.textContent =
+      `${data.length} job${data.length === 1 ? "" : "s"} found`;
+
+
+    results.innerHTML =
+      data.map(job => `
+
+        <article class="job">
+
+          <h2>${escapeHtml(job.title || "Untitled Job")}</h2>
+
+          <strong>
+            ${escapeHtml(job.company_name || "Company")}
+          </strong>
+
+          <p>
+            📍 ${escapeHtml(job.location || "Location not listed")}
+          </p>
+
+          <span class="badge">
+            ${escapeHtml(job.employment_type || "Employment type not listed")}
+          </span>
+
+          ${
+            job.is_remote
+              ? '<span class="badge remote">🏠 Remote</span>'
+              : ""
+          }
+
+          ${
+            job.requires_asl
+              ? '<span class="badge asl">🤟 ASL-Friendly</span>'
+              : ""
+          }
+
+          ${
+            job.category
+              ? `<span class="badge">${escapeHtml(job.category)}</span>`
+              : ""
+          }
+
+          <p>
+            ${escapeHtml(job.description || "")}
+          </p>
+
+          ${
+            job.application_url
+              ? `<a class="apply"
+                   href="${escapeHtml(job.application_url)}"
+                   target="_blank"
+                   rel="noopener">
+                   Apply for this job
+                 </a>`
+              : ""
+          }
+
+        </article>
+
+      `).join("");
+
+  }
+
+
+  function escapeHtml(value) {
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  window.searchJobs = searchJobs;
+
+  searchJobs();
+
+</script>
+
 </body>
 </html>
